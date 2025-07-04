@@ -1,8 +1,8 @@
 <?php
 $host = 'localhost';
-$db = 'pos_system';
-$user = 'root';
-$pass = '';
+$db = 'u263749830_simplepos';
+$user = 'u263749830_pos';
+$pass = '+hE27|SGvA0';
 
 try {
     $pdo = new PDO("mysql:host=$host;dbname=$db", $user, $pass);
