@@ -1,5 +1,6 @@
 <?php
 require_once 'config.php';
+$user_id = $_SESSION['user_id'];
 
 // Initialize cart in session
 if (!isset($_SESSION['cart'])) {
@@ -89,8 +90,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action'])) {
 
             $invoice_id = generateInvoiceNumber();
             $due_date = date('Y-m-d H:i:s', strtotime('+30 days'));
-            $stmt = $pdo->prepare("INSERT INTO sales (customer_id, subtotal, tax_rate, tax, discount, total, invoice_id, payment_method, status, notes, due_date) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-            $stmt->execute([$customer_id, $subtotal, $tax_rate, $tax, $discount, $total, $invoice_id, $payment_method, 'paid', $notes, $due_date]);
+            $stmt = $pdo->prepare("INSERT INTO sales (user_id, customer_id, subtotal, tax_rate, tax, discount, total, invoice_id, payment_method, status, notes, due_date) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?)");
+            $stmt->execute([$user_id, $customer_id, $subtotal, $tax_rate, $tax, $discount, $total, $invoice_id, $payment_method, 'paid', $notes, $due_date]);
             $sale_id = $pdo->lastInsertId();
 
             foreach ($_SESSION['cart'] as $item) {
@@ -104,7 +105,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action'])) {
                 }
             }
 
-            $invoice_link = "https://infiveprint.com/simplepos/invoice_viewer.php?invoice_id=$invoice_id";
+            $invoice_link = "http://localhost/pos_system/invoice_viewer.php?invoice_id=$invoice_id";
             $stmt = $pdo->prepare("INSERT INTO invoices (sale_id, invoice_id, link) VALUES (?, ?, ?)");
             $stmt->execute([$sale_id, $invoice_id, $invoice_link]);
 
@@ -140,7 +141,14 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action'])) {
             } else {
                 $response_data = json_decode($response, true);
                 if ($response_data && isset($response_data['status']) && $response_data['status'] === 'success') {
-                    $sms_message = '<div class="bg-green-100 text-green-700 p-4 rounded-lg mb-4">Sale completed successfully! SMS sent to customer.</div>';
+                    $sms_message = '
+                        <div class="bg-green-100 text-green-700 p-4 rounded-lg mb-4">
+                            Sale completed successfully! SMS sent to customer.
+                        </div>
+                        <a href="invoice_viewer.php?invoice_id=' . $invoice_id . '" target="_blank" class="inline-block bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded">
+                            View Invoice
+                        </a>
+                    ';
                 } else {
                     $error_msg = isset($response_data['message']) ? $response_data['message'] : 'Unknown error';
                     $sms_message = '<div class="bg-red-100 text-red-700 p-4 rounded-lg mb-4">Sale completed, but SMS sending failed: ' . htmlspecialchars($error_msg) . '</div>';
@@ -191,9 +199,9 @@ foreach ($_SESSION['cart'] as $item) {
                 <div id="productGrid" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <?php foreach ($active_products as $product): ?>
                         <div class="product-card bg-white rounded-lg shadow-sm border border-gray-200 p-4 hover:shadow-md transition-shadow"
-                             data-name="<?php echo htmlspecialchars(strtolower($product['name'])); ?>"
-                             data-description="<?php echo htmlspecialchars(strtolower($product['description'])); ?>"
-                             data-sku="<?php echo htmlspecialchars(strtolower($product['sku'] ?? '')); ?>">
+                            data-name="<?php echo htmlspecialchars(strtolower($product['name'])); ?>"
+                            data-description="<?php echo htmlspecialchars(strtolower($product['description'])); ?>"
+                            data-sku="<?php echo htmlspecialchars(strtolower($product['sku'] ?? '')); ?>">
                             <div class="flex justify-between items-start mb-2">
                                 <h3 class="font-medium text-gray-900 text-sm sm:text-base"><?php echo htmlspecialchars($product['name']); ?></h3>
                                 <span class="px-2 py-1 rounded-full text-xs font-medium <?php echo $product['category'] == 'product' ? 'bg-green-100 text-green-800' : 'bg-purple-100 text-purple-800'; ?>">
@@ -382,30 +390,30 @@ foreach ($_SESSION['cart'] as $item) {
 </div>
 
 <script>
-function updateTotals() {
-    const taxRate = parseFloat(document.querySelector('input[name="tax_rate"]').value) || 0;
-    const discount = parseFloat(document.querySelector('input[name="discount"]').value) || 0;
-    const subtotal = <?php echo $cart_total; ?>;
-    const tax = subtotal * (taxRate / 100);
-    const total = subtotal + tax - discount;
+    function updateTotals() {
+        const taxRate = parseFloat(document.querySelector('input[name="tax_rate"]').value) || 0;
+        const discount = parseFloat(document.querySelector('input[name="discount"]').value) || 0;
+        const subtotal = <?php echo $cart_total; ?>;
+        const tax = subtotal * (taxRate / 100);
+        const total = subtotal + tax - discount;
 
-    document.getElementById('tax_rate_display').textContent = taxRate;
-    document.getElementById('tax_amount').textContent = 'Rs. ' + tax.toFixed(2);
-    document.getElementById('discount_amount').textContent = '-Rs. ' + discount.toFixed(2);
-    document.getElementById('total_amount').textContent = 'Rs. ' + (total < 0 ? 0 : total).toFixed(2);
-    document.querySelector('button[type="submit"]').disabled = total < 0;
-}
+        document.getElementById('tax_rate_display').textContent = taxRate;
+        document.getElementById('tax_amount').textContent = 'Rs. ' + tax.toFixed(2);
+        document.getElementById('discount_amount').textContent = '-Rs. ' + discount.toFixed(2);
+        document.getElementById('total_amount').textContent = 'Rs. ' + (total < 0 ? 0 : total).toFixed(2);
+        document.querySelector('button[type="submit"]').disabled = total < 0;
+    }
 
-function filterProducts() {
-    const searchInput = document.getElementById('searchInput').value.toLowerCase();
-    const productCards = document.querySelectorAll('.product-card');
+    function filterProducts() {
+        const searchInput = document.getElementById('searchInput').value.toLowerCase();
+        const productCards = document.querySelectorAll('.product-card');
 
-    productCards.forEach(card => {
-        const name = card.getAttribute('data-name') || '';
-        const description = card.getAttribute('data-description') || '';
-        const sku = card.getAttribute('data-sku') || '';
-        const matches = name.includes(searchInput) || description.includes(searchInput) || sku.includes(searchInput);
-        card.style.display = matches ? '' : 'none';
-    });
-}
+        productCards.forEach(card => {
+            const name = card.getAttribute('data-name') || '';
+            const description = card.getAttribute('data-description') || '';
+            const sku = card.getAttribute('data-sku') || '';
+            const matches = name.includes(searchInput) || description.includes(searchInput) || sku.includes(searchInput);
+            card.style.display = matches ? '' : 'none';
+        });
+    }
 </script>

@@ -11,6 +11,11 @@ $total_customers = $pdo->query("SELECT COUNT(*) as count FROM customers")->fetch
 $total_invoices = $pdo->query("SELECT COUNT(*) as count FROM invoices")->fetchColumn();
 $recent_transactions = $pdo->query("SELECT s.*, c.name as customer_name FROM sales s JOIN customers c ON s.customer_id = c.id ORDER BY s.created_at DESC LIMIT 5")->fetchAll();
 $low_stock_products = $pdo->query("SELECT * FROM products WHERE category = 'product' AND status = 'active' AND stock < 10")->fetchAll();
+
+// get daily revenue
+$daily_revenue = $pdo->query("SELECT SUM(total) as revenue FROM sales WHERE DATE(created_at) = CURDATE() AND status = 'paid'")->fetchColumn() ?: 0;
+// get monthly revenue
+$monthly_revenue = $pdo->query("SELECT SUM(total) as revenue FROM sales WHERE MONTH(created_at) = MONTH(CURDATE()) AND YEAR(created_at) = YEAR(CURDATE()) AND status = 'paid'")->fetchColumn() ?: 0;
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -28,7 +33,31 @@ $low_stock_products = $pdo->query("SELECT * FROM products WHERE category = 'prod
         <h1 class="text-3xl font-bold text-gray-900">Dashboard</h1>
         <p class="text-gray-600 mt-2">Welcome to your POS system overview</p>
     </div>
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
+            <div class="flex items-center justify-between">
+            <div>
+                <p class="text-sm font-medium text-gray-600">Daily Revenue</p>
+                <p class="text-2xl font-bold text-gray-900 mt-2">Rs. <?php echo number_format($daily_revenue, 2); ?>
+                </p>
+            </div>
+            <div class="p-3 rounded-lg bg-cyan-500">
+                <i data-lucide="calendar-days" class="w-6 h-6 text-white"></i>
+            </div>
+            </div>
+        </div>
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
+            <div class="flex items-center justify-between">
+            <div>
+                <p class="text-sm font-medium text-gray-600">Monthly Revenue</p>
+                <p class="text-2xl font-bold text-gray-900 mt-2">Rs. <?php echo number_format($monthly_revenue, 2); ?>
+                </p>
+            </div>
+            <div class="p-3 rounded-lg bg-indigo-500">
+                <i data-lucide="calendar-range" class="w-6 h-6 text-white"></i>
+            </div>
+            </div>
+        </div>
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
             <div class="flex items-center justify-between">
                 <div>

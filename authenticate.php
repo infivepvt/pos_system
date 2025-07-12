@@ -16,7 +16,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             // Successful login
             $_SESSION['user_id'] = $user['id'];
             $_SESSION['username'] = $user['username'];
-            header("Location: index.php?page=dashboard");
+            header("Location: index.php?page=sales");
             exit;
         } else {
             // Invalid credentials
