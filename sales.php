@@ -139,6 +139,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action'])) {
                 $sms_message = '<div class="bg-red-100 text-red-700 p-4 rounded-lg mb-4">Sale completed, but SMS sending failed: Network error. Please try again.</div>';
                 error_log("SMS cURL Error: $err");
             } else {
+
+
                 $response_data = json_decode($response, true);
                 if ($response_data && isset($response_data['status']) && $response_data['status'] === 'success') {
                     $sms_message = '
@@ -149,6 +151,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action'])) {
                             View Invoice
                         </a>
                     ';
+
+
+                    // navigate to invoice_viewer.php?invoice_id=$invoice_id
+                    header("Location: invoice_viewer.php?invoice_id=$invoice_id");
+                    exit;
                 } else {
                     $error_msg = isset($response_data['message']) ? $response_data['message'] : 'Unknown error';
                     $sms_message = '<div class="bg-red-100 text-red-700 p-4 rounded-lg mb-4">Sale completed, but SMS sending failed: ' . htmlspecialchars($error_msg) . '</div>';
