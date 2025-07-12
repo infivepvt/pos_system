@@ -1,5 +1,4 @@
 <?php
-
 require_once 'config.php';
 
 if (!isset($_GET['invoice_id'])) {
@@ -49,6 +48,9 @@ if (isset($_GET['download']) && $_GET['download'] == 1) {
         <div class="flex justify-between items-center mb-6 print:hidden">
             <h1 class="text-2xl font-bold text-gray-900">Invoice Details</h1>
             <div class="flex gap-3">
+                <button onclick="history.back()" class="flex items-center gap-2 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors">
+                    <i data-lucide="arrow-left" class="w-4 h-4"></i> Back
+                </button>
                 <button onclick="handleShare()" class="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
                     <i data-lucide="share-2" class="w-4 h-4"></i> Share
                 </button>
