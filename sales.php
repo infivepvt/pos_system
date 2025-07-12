@@ -105,7 +105,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action'])) {
                 }
             }
 
-            $invoice_link = "http://localhost/pos_system/invoice_viewer.php?invoice_id=$invoice_id";
+            $invoice_link = "https://infiveprint.com/simplepos/invoice_viewer.php?invoice_id=$invoice_id";
             $stmt = $pdo->prepare("INSERT INTO invoices (sale_id, invoice_id, link) VALUES (?, ?, ?)");
             $stmt->execute([$sale_id, $invoice_id, $invoice_link]);
 
