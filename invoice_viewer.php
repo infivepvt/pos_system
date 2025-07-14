@@ -1,4 +1,6 @@
 <?php
+// Start the session
+session_start();
 require_once 'config.php';
 
 if (!isset($_GET['invoice_id'])) {
@@ -19,8 +21,6 @@ $stmt->execute([$invoice['id']]);
 $items = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 if (isset($_GET['download']) && $_GET['download'] == 1) {
-    // Simulate PDF download (requires a PDF library like TCPDF)
-    // For now, we'll use a placeholder alert
     echo "<script>alert('Invoice download started!');</script>";
 }
 ?>
@@ -49,8 +49,7 @@ if (isset($_GET['download']) && $_GET['download'] == 1) {
             }
         }
         function goBack() {
-            // Redirect to a specific page, e.g., dashboard or invoice list
-            window.location.href = 'https://infiveprint.com/simplepos/index.php?page=sales'; // Change to your actual dashboard or list page
+            window.location.href = 'https://infiveprint.com/simplepos/index.php?page=sales';
         }
     </script>
 </head>
@@ -59,9 +58,11 @@ if (isset($_GET['download']) && $_GET['download'] == 1) {
         <div class="flex justify-between items-center mb-6 print:hidden">
             <h1 class="text-2xl font-bold text-gray-900">Invoice Details</h1>
             <div class="flex gap-3">
-                <button onclick="goBack()" class="flex items-center gap-2 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors">
-                    <i data-lucide="arrow-left" class="w-4 h-4"></i> Back
-                </button>
+                <?php if (isset($_SESSION['user_id'])): // Check if user is logged in ?>
+                    <button onclick="goBack()" class="flex items-center gap-2 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors">
+                        <i data-lucide="arrow-left" class="w-4 h-4"></i> Back
+                    </button>
+                <?php endif; ?>
                 <button onclick="handleShare()" class="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
                     <i data-lucide="share-2" class="w-4 h-4"></i> Share
                 </button>
