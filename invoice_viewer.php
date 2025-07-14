@@ -5,16 +5,22 @@ if (!isset($_GET['invoice_id'])) {
     die("Invoice ID not provided.");
 }
 
-$invoice_id = $_GET['invoice_id'];
-$invoice = $pdo->query("SELECT s.*, c.name as customer_name, c.phone, c.email, c.address FROM sales s JOIN customers c ON s.customer_id = c.id WHERE s.invoice_id = '$invoice_id'")->fetch();
-$items = $pdo->query("SELECT si.*, p.name, p.description FROM sale_items si JOIN products p ON si.product_id = p.id WHERE si.sale_id = {$invoice['id']}")->fetchAll();
+$invoice_id = filter_var($_GET['invoice_id'], FILTER_SANITIZE_STRING);
+$stmt = $pdo->prepare("SELECT s.*, c.name as customer_name, c.phone, c.email, c.address FROM sales s JOIN customers c ON s.customer_id = c.id WHERE s.invoice_id = ?");
+$stmt->execute([$invoice_id]);
+$invoice = $stmt->fetch(PDO::FETCH_ASSOC);
 
 if (!$invoice) {
     die("Invoice not found.");
 }
 
+$stmt = $pdo->prepare("SELECT si.*, p.name, p.description FROM sale_items si JOIN products p ON si.product_id = p.id WHERE si.sale_id = ?");
+$stmt->execute([$invoice['id']]);
+$items = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
 if (isset($_GET['download']) && $_GET['download'] == 1) {
     // Simulate PDF download (requires a PDF library like TCPDF)
+    // For now, we'll use a placeholder alert
     echo "<script>alert('Invoice download started!');</script>";
 }
 ?>
@@ -23,6 +29,7 @@ if (isset($_GET['download']) && $_GET['download'] == 1) {
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Invoice <?php echo htmlspecialchars($invoice['invoice_id']); ?></title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
@@ -33,13 +40,17 @@ if (isset($_GET['download']) && $_GET['download'] == 1) {
         function handleShare() {
             if (navigator.share) {
                 navigator.share({
-                    title: 'Invoice <?php echo $invoice['invoice_id']; ?>',
+                    title: 'Invoice <?php echo htmlspecialchars($invoice['invoice_id']); ?>',
                     url: window.location.href
                 });
             } else {
                 navigator.clipboard.writeText(window.location.href);
                 alert('Invoice link copied to clipboard!');
             }
+        }
+        function goBack() {
+            // Redirect to a specific page, e.g., dashboard or invoice list
+            window.location.href = 'https://infiveprint.com/simplepos/index.php?page=sales'; // Change to your actual dashboard or list page
         }
     </script>
 </head>
@@ -48,7 +59,7 @@ if (isset($_GET['download']) && $_GET['download'] == 1) {
         <div class="flex justify-between items-center mb-6 print:hidden">
             <h1 class="text-2xl font-bold text-gray-900">Invoice Details</h1>
             <div class="flex gap-3">
-                <button onclick="history.back()" class="flex items-center gap-2 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors">
+                <button onclick="goBack()" class="flex items-center gap-2 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors">
                     <i data-lucide="arrow-left" class="w-4 h-4"></i> Back
                 </button>
                 <button onclick="handleShare()" class="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
